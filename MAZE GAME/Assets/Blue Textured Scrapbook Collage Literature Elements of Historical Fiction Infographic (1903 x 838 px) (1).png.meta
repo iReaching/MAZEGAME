@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 96745b24995bd2b4585164e9992ff996
+guid: 89d8d30930f375a4eaaf76a6965d1764
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -138,8 +138,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6308ddb102bd73a43b1eda38745ddf17
-      internalID: -1885244938
+      spriteID: 94150e08213833c46bdf582f4e44c2e0
+      internalID: 939012365
       vertices: []
       indices: 
       edges: []
@@ -160,8 +160,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9f3aaefa2f9930147ad933586e11f263
-      internalID: 1596353978
+      spriteID: a834b68fcf94b1344abf7096e5251f83
+      internalID: -641477116
       vertices: []
       indices: 
       edges: []
@@ -182,8 +182,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 0b6ba45f30897c147a9e28dd440c29ac
-      internalID: -743235340
+      spriteID: d1da2794bb621e8449248f5d4545c160
+      internalID: 824493602
       vertices: []
       indices: 
       edges: []
@@ -193,10 +193,10 @@ TextureImporter:
         Infographic (1903 x 838 px) (1)_3
       rect:
         serializedVersion: 2
-        x: 518
-        y: 78
-        width: 784
-        height: 98
+        x: 522
+        y: 79
+        width: 776
+        height: 90
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -204,8 +204,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5c8ea01bd3a3c29489a9c7399dc409ab
-      internalID: -646601763
+      spriteID: 0f66d954351862545b8424fbabdf6b9e
+      internalID: 993798192
       vertices: []
       indices: 
       edges: []
@@ -221,10 +221,10 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_0: -1885244938
-      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_1: 1596353978
-      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_2: -743235340
-      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_3: -646601763
+      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_0: 939012365
+      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_1: -641477116
+      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_2: 824493602
+      Blue Textured Scrapbook Collage Literature Elements of Historical Fiction Infographic (1903 x 838 px) (1)_3: 993798192
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

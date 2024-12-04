@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 11a50ec32cc0d654ca3720bcd8c6607c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - Level: {instanceID: 0}
+  - Player: {instanceID: 0}
+  - Goal: {instanceID: 0}
+  - Floor: {instanceID: 0}
+  - Wall: {instanceID: 0}
+  - cam: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
