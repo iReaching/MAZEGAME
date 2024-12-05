@@ -12,6 +12,10 @@ public class Game : MonoBehaviour
     public Transform Level, Player, Goal;
     public GameObject Floor, Wall;
     public CinemachineVirtualCamera cam;
+    public Joystick joystick; // Reference to Joystick
+    private Vector2 currentJoystickDirection; // Tracks the current joystick direction
+    private float joystickMoveCooldown = 0.4f; // Cooldown duration between moves
+    private float lastMoveTime; // Timestamp of the last move
 
     void Start()
     {
@@ -55,25 +59,93 @@ public class Game : MonoBehaviour
 
     void Update()
     {
-        var dirs = new[]
-        {
-            (x - 1, y, hwalls, x, y, Vector3.right, 90, KeyCode.A),
-            (x + 1, y, hwalls, x + 1, y, Vector3.right, 90, KeyCode.D),
-            (x, y - 1, vwalls, x, y, Vector3.up, 0, KeyCode.S),
-            (x, y + 1, vwalls, x, y + 1, Vector3.up, 0, KeyCode.W),
-        };
-        foreach (var (nx, ny, wall, wx, wy, sh, ang, k) in dirs.OrderBy(d => Random.value))
-            if (Input.GetKeyDown(k))
-                if (wall[wx, wy])
-                    Player.position = Vector3.Lerp(Player.position, new Vector3(nx, ny), 0.1f);
-                else (x, y) = (nx, ny);
+        HandleJoystickInput();
+        SmoothPlayerMovement();
+        CheckGoalReached();
+    }
 
+    void HandleJoystickInput()
+    {
+        // Get joystick input
+        float horizontal = joystick.Horizontal;
+        float vertical = joystick.Vertical;
+
+        // Determine the primary direction of the joystick
+        Vector2 direction = new Vector2(
+            Mathf.Abs(horizontal) > Mathf.Abs(vertical) ? Mathf.Sign(horizontal) : 0,
+            Mathf.Abs(vertical) > Mathf.Abs(horizontal) ? Mathf.Sign(vertical) : 0
+        );
+
+        // Update movement based on joystick direction
+        if (direction != Vector2.zero)
+        {
+            // If direction changes or enough time has passed, move
+            if (direction != currentJoystickDirection || Time.time - lastMoveTime > joystickMoveCooldown)
+            {
+                if (direction.x < 0) MoveLeft();
+                if (direction.x > 0) MoveRight();
+                if (direction.y < 0) MoveDown();
+                if (direction.y > 0) MoveUp();
+
+                currentJoystickDirection = direction;
+                lastMoveTime = Time.time;
+            }
+        }
+        else
+        {
+            // Reset direction if joystick is released
+            currentJoystickDirection = Vector2.zero;
+        }
+    }
+
+    void SmoothPlayerMovement()
+    {
         Player.position = Vector3.Lerp(Player.position, new Vector3(x, y), Time.deltaTime * 12);
+    }
+
+    void CheckGoalReached()
+    {
         if (Vector3.Distance(Player.position, Goal.position) < 0.12f)
         {
             if (Random.Range(0, 5) < 3) w++;
             else h++;
             Start();
+        }
+    }
+
+    public void MoveLeft()
+    {
+        TryMove(-1, 0, hwalls, x, y);
+    }
+
+    public void MoveRight()
+    {
+        TryMove(1, 0, hwalls, x + 1, y);
+    }
+
+    public void MoveDown()
+    {
+        TryMove(0, -1, vwalls, x, y);
+    }
+
+    public void MoveUp()
+    {
+        TryMove(0, 1, vwalls, x, y + 1);
+    }
+
+    void TryMove(int dx, int dy, bool[,] walls, int wx, int wy)
+    {
+        int nx = x + dx;
+        int ny = y + dy;
+
+        if (walls[wx, wy])
+        {
+            Player.position = Vector3.Lerp(Player.position, new Vector3(nx, ny), 0.1f);
+        }
+        else
+        {
+            x = nx;
+            y = ny;
         }
     }
 }
