@@ -40,6 +40,7 @@ public class Game : MonoBehaviour
     private float torchActivationCooldown = 1.5f; // Cooldown duration in seconds
     private float lastTorchActivationTime = -1f;  // Tracks the last time a torch was placed
     private void Awake()
+
     {
         if (instance == null)
         {

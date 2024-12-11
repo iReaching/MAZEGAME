@@ -879,7 +879,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -641477116, guid: 89d8d30930f375a4eaaf76a6965d1764, type: 3}
+  m_Sprite: {fileID: 21300000, guid: bffaeb5c0898b0b40b22a3c9909785ab, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -900,7 +900,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4.3232, y: 3.4987, z: 0}
-  m_LocalScale: {x: 0.19014783, y: 0.19014783, z: 0.19014783}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1358968536}
@@ -2632,9 +2632,29 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1323495596903845823, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
+      propertyPath: sound
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1955855746994002052, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
       propertyPath: m_Name
       value: Trap
+      objectReference: {fileID: 0}
+    - target: {fileID: 3181201876387105474, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
+      propertyPath: Loop
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3181201876387105474, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
+      propertyPath: m_Volume
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3181201876387105474, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3181201876387105474, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
+      propertyPath: m_PlayOnAwake
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6141400169886954031, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2676,7 +2696,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 7286787076738380696, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
+      propertyPath: m_Radius
+      value: 0.3
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 1323495596903845823, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
+    - {fileID: 3181201876387105474, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
