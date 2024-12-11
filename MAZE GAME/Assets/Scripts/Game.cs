@@ -1,10 +1,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.AI.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 public class Game : MonoBehaviour
 {
+    public static Game instance;
+    public GameObject gameOverPanel; // Reference to the Game Over popup
+    public GameObject trapPrefab; // Assign the Trap prefab in the inspector
+    private int trapCount = 1; // Number of traps to spawn per maze
+    private int mazeGenerationCount = 0; // Tracks the number of mazes generated
+
+    public float initialTime = 60f; // Starting time in seconds
+    private float currentTime; // Current remaining time
+    private bool isGameOver = false; // Tracks game over state
+    public TextMeshProUGUI timerText; // UI Text to display the timer
+
     public float holep;
     public int w, h, x, y;
     public bool[,] hwalls, vwalls;
@@ -23,22 +37,118 @@ public class Game : MonoBehaviour
     private float lastMoveTime;
     private float tapStartTime = -1f; // Tracks when the joystick was tapped
     private bool isMoving = false; // Tracks if the player is moving
-    private float torchPlaceCooldown = 1.5f; // Cooldown duration in seconds
-    private float lastTorchPlaceTime = -1f;  // Tracks the last time a torch was placed
-
-
+    private float torchActivationCooldown = 1.5f; // Cooldown duration in seconds
+    private float lastTorchActivationTime = -1f;  // Tracks the last time a torch was placed
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this; // Set the singleton instance
+            DontDestroyOnLoad(gameObject); // Ensure this Game object persists across scenes
+        }
+        else
+        {
+            Debug.LogWarning("Duplicate Game instance found. Destroying this instance.");
+            Destroy(gameObject); // Prevent duplicate Game objects
+        }
+    }
+   
     void Start()
     {
+        // Initialize game state
+        if (currentTime <= 0)
+        {
+            currentTime = initialTime;
+        }
+        isGameOver = false;
+        UpdateTimerUI();
         GenerateMaze();
         UpdateTorchUI();
     }
 
     void Update()
     {
+        if (!isGameOver)
+        {
+            currentTime -= Time.deltaTime; // Reduce time
+            if (currentTime <= 0)
+            {
+                currentTime = 0;
+                GameOver(); // Trigger Game Over
+            }
+            UpdateTimerUI();
+        }
         HandleJoystickInput();
         SmoothPlayerMovement();
         CheckGoalReached();
         AdjustCameraZoom(); // Dynamically adjust the zoom
+    }
+    void UpdateTimerUI()
+    {
+        if (timerText == null)
+        {
+            Debug.LogWarning("TimerText is null. Cannot update timer UI.");
+            return;
+        }
+
+        int minutes = Mathf.FloorToInt(currentTime / 60);
+        int seconds = Mathf.FloorToInt(currentTime % 60);
+        timerText.text = $"Time: {minutes:00}:{seconds:00}";
+
+        // Change color to red if time is low
+        timerText.color = currentTime <= 20f ? Color.red : Color.white;
+    
+
+
+        // Change color to red if time is low
+        if (currentTime <= 20f)
+        {
+            timerText.color = Color.red; // Change to red
+        }
+        else
+        {
+            timerText.color = Color.white; // Default color
+        }
+    }
+    public void AddTime(float extraTime)
+    {
+        currentTime += extraTime; // Update the timer
+        UpdateTimerUI();          // Refresh the displayed timer
+        Debug.Log($"Time adjusted by {extraTime}. Current time: {currentTime}");
+    }
+    public void RestartGame()
+    {
+        AudioManager.instance.PlaySFX("ButtonPress");
+        Debug.Log("Restarting game...");
+        Time.timeScale = 1f; // Resume the game
+        gameOverPanel.SetActive(false); // Hide the popup
+
+        // Reset the game state
+        ResetGameState();
+    }
+    public void QuitGame()
+    {
+        AudioManager.instance.PlaySFX("ButtonPress");
+        Application.Quit();
+    }
+    void GameOver()
+    {
+        isGameOver = true;
+        Debug.Log("Game Over triggered!");
+        Time.timeScale = 0f; // Pause the game
+        gameOverPanel.SetActive(true); // Show the Game Over popup
+    }
+    private void ResetGameState()
+    {
+        // Reset game variables (time, torch count, etc.)
+        currentTime = initialTime;
+        torchCount = 0;
+        isGameOver = false;
+
+        // Regenerate the maze or reset any other states
+        GenerateMaze();
+        UpdateTimerUI();
+        UpdateTorchUI();
     }
     void AdjustCameraZoom()
     {
@@ -59,25 +169,22 @@ public class Game : MonoBehaviour
             Time.deltaTime * 2f // Adjust zoom speed
         );
     }
-
-
-
     void GenerateMaze()
     {
-        cameraDebugLogged = false; // Reset the flag to allow logging for the new maze
         foreach (Transform child in Level)
             Destroy(child.gameObject);
 
         hwalls = new bool[w + 1, h];
         vwalls = new bool[w, h + 1];
         var st = new int[w, h];
-        var reachableCells = new List<Vector2Int>(); // Store all reachable cells
+        var reachableCells = new List<Vector2Int>();
 
+        // Depth-first search (DFS) to generate the maze
         void dfs(int x, int y)
         {
             st[x, y] = 1;
             Instantiate(Floor, new Vector3(x, y), Quaternion.identity, Level);
-            reachableCells.Add(new Vector2Int(x, y)); // Add cell to reachable list
+            reachableCells.Add(new Vector2Int(x, y)); // Track all reachable cells
 
             var dirs = new[]
             {
@@ -86,6 +193,7 @@ public class Game : MonoBehaviour
             (x, y - 1, vwalls, x, y, Vector3.up, 0),
             (x, y + 1, vwalls, x, y + 1, Vector3.up, 0),
         };
+
             foreach (var (nx, ny, wall, wx, wy, sh, ang) in dirs.OrderBy(d => Random.value))
             {
                 if (!(0 <= nx && nx < w && 0 <= ny && ny < h) || (st[nx, ny] == 2 && Random.value > holep))
@@ -102,82 +210,123 @@ public class Game : MonoBehaviour
         }
         dfs(0, 0);
 
+        // Place player
         x = Random.Range(0, w);
         y = Random.Range(0, h);
         Player.position = new Vector3(x, y);
 
-        do Goal.position = new Vector3(Random.Range(0, w), Random.Range(0, h));
-        while (Vector3.Distance(Player.position, Goal.position) < (w + h) / 4);
+        // Place the flag as far as possible from the player
+        PlaceFlagAsFarAsPossible(reachableCells);
 
-        // Remove unreachable cells (e.g., near the flag or the player spawn point)
-        reachableCells.RemoveAll(cell => cell == new Vector2Int(x, y));
-        reachableCells.RemoveAll(cell => IsBlockedByFlag(cell));
-
-        if (Random.Range(0f, 1f) < 0.75f) // 75% chance to spawn a torch
+        // Generate torches and traps
+        GenerateTorch(reachableCells);
+        if (mazeGenerationCount >= 3)
         {
-            if (reachableCells.Count > 0)
+            GenerateTraps(reachableCells);
+        }
+
+        mazeGenerationCount++;
+    }
+
+    // Place the flag as far as possible from the player's starting position
+    void PlaceFlagAsFarAsPossible(List<Vector2Int> reachableCells)
+    {
+        Vector2Int playerPosition = new Vector2Int(x, y);
+        Vector2Int farthestCell = playerPosition;
+        float maxDistance = float.MinValue;
+
+        foreach (Vector2Int cell in reachableCells)
+        {
+            float distance = Vector2.Distance(playerPosition, cell);
+            if (distance > maxDistance)
             {
-                bool torchPlaced = false;
-
-                foreach (var cell in reachableCells)
-                {
-                    if (IsReachable(new Vector2Int(x, y), cell))
-                    {
-                        Instantiate(TorchPickupPrefab, new Vector3(cell.x, cell.y, 0), Quaternion.identity, Level);
-                        Debug.Log($"Torch successfully spawned at: {cell}");
-                        torchPlaced = true;
-                        break;
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Cell {cell} is not reachable from the player's position ({x}, {y})!");
-                    }
-                }
-
-                if (!torchPlaced)
-                {
-                    Debug.LogWarning("Fallback: Placing torch without IsReachable check!");
-
-                    // Place the torch at the closest valid cell
-                    Vector2Int fallbackCell = reachableCells[0];
-                    float minDistance = float.MaxValue;
-
-                    foreach (var cell in reachableCells)
-                    {
-                        float distance = Vector2Int.Distance(new Vector2Int(x, y), cell);
-                        if (distance < minDistance)
-                        {
-                            minDistance = distance;
-                            fallbackCell = cell;
-                        }
-                    }
-
-                    Instantiate(TorchPickupPrefab, new Vector3(fallbackCell.x, fallbackCell.y, 0), Quaternion.identity, Level);
-                    Debug.Log($"Torch fallback placed at closest cell: {fallbackCell}");
-                }
-
-            }
-            else
-            {
-                Debug.LogWarning("No reachable cells available for torch placement!");
+                maxDistance = distance;
+                farthestCell = cell;
             }
         }
 
-
-
+        Goal.position = new Vector3(farthestCell.x, farthestCell.y, 0);
+        Debug.Log($"Flag placed at: {farthestCell}, distance from player: {maxDistance}");
     }
 
+    // Torch Generation
+    void GenerateTorch(List<Vector2Int> reachableCells)
+    {
+        reachableCells.RemoveAll(cell => cell == new Vector2Int(x, y)); // Remove player position
+        reachableCells.RemoveAll(cell => IsBlockedByFlag(cell)); // Remove cells near the flag
+
+        foreach (var cell in reachableCells.OrderBy(c => Random.value).Take(1)) // Generate 3 torches
+        {
+            Instantiate(TorchPickupPrefab, new Vector3(cell.x, cell.y, 0), Quaternion.identity, Level);
+        }
+    }
+
+    // Trap Generation
+    void GenerateTraps(List<Vector2Int> reachableCells)
+    {
+        if (trapCount <= 0) return; // No traps to spawn
+
+        reachableCells.RemoveAll(cell => cell == new Vector2Int(x, y)); // Remove player position
+        reachableCells.RemoveAll(cell => IsBlockedByFlag(cell)); // Remove cells near the flag
+
+        for (int i = 0; i < trapCount; i++) // Loop based on trapCount
+        {
+            int attempts = 0;
+            bool valid = false;
+            Vector2Int trapCell = Vector2Int.zero;
+
+            do
+            {
+                trapCell = reachableCells[Random.Range(0, reachableCells.Count)];
+                valid = IsValidTrapCell(trapCell);
+                attempts++;
+            }
+            while (!valid && attempts < 100);
+
+            if (valid)
+            {
+                reachableCells.Remove(trapCell); // Remove cell to prevent overlap
+                Instantiate(trapPrefab, new Vector3(trapCell.x, trapCell.y, 0), Quaternion.identity, Level);
+                Debug.Log($"Trap placed at: {trapCell}");
+            }
+            else
+            {
+                Debug.LogWarning("Unable to find a valid position for trap.");
+            }
+        }
+    }
+
+
+    // Validates trap placement
+    bool IsValidTrapCell(Vector2Int cell)
+    {
+        if (cell == new Vector2Int(x, y)) return false; // Avoid player position
+        if (Vector2.Distance(new Vector2(cell.x, cell.y), Goal.position) < 1.0f) return false; // Avoid near flag
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(new Vector2(cell.x, cell.y), 0.1f);
+        foreach (var hit in hits)
+        {
+            if (hit.CompareTag("TorchPickup") || hit.CompareTag("Trap"))
+            {
+                return false; // Avoid overlapping torches or traps
+            }
+        }
+        return true;
+    }
+
+    // Checks if a cell is blocked by the flag
     bool IsBlockedByFlag(Vector2Int cell)
     {
         Vector3 flagPosition = Goal.position;
         return Vector2.Distance(new Vector2(cell.x, cell.y), new Vector2(flagPosition.x, flagPosition.y)) < 1.0f;
     }
-
-
-
-
     void HandleJoystickInput()
     {
+        if (joystick == null)
+        {
+            Debug.LogWarning("Joystick reference is null. Skipping joystick input.");
+            return;
+        }
         float horizontal = joystick.Horizontal;
         float vertical = joystick.Vertical;
 
@@ -190,7 +339,7 @@ public class Game : MonoBehaviour
         {
             if (!isMoving && tapStartTime > 0 && Time.time - tapStartTime <= 0.2f) // Tap detected
             {
-                PlaceTorch();
+                ActivateTorch();
             }
             tapStartTime = -1f; // Reset tap timer
             isMoving = false;
@@ -217,22 +366,38 @@ public class Game : MonoBehaviour
             }
         }
     }
-
     void SmoothPlayerMovement()
     {
         Player.position = Vector3.Lerp(Player.position, new Vector3(x, y), Time.deltaTime * 12);
     }
-
     void CheckGoalReached()
     {
         if (Vector3.Distance(Player.position, Goal.position) < 0.12f)
         {
+            AudioManager.instance.PlaySFX("ObjectiveGrab");
+            AddTime(10); // Add time for reaching the goal
+            Debug.Log("Time extended! Current time: " + currentTime);
+
+            // Increment maze dimensions
             if (Random.Range(0, 5) < 3) w++;
             else h++;
-            Start();
+
+
+            RegenerateMaze(); // Call a dedicated maze regeneration method
         }
     }
+    void RegenerateMaze()
+    {
+        // Reset any flags or states for the new maze
+        cameraDebugLogged = false;
 
+        // Regenerate the maze
+        GenerateMaze();
+
+        // Reset player and goal states, if necessary
+        UpdateTorchUI();
+        UpdateTimerUI();
+    }
     public void MoveLeft()
     {
         TryMove(-1, 0, hwalls, x, y);
@@ -276,14 +441,14 @@ public class Game : MonoBehaviour
         var visited = new HashSet<Vector2Int>();
         queue.Enqueue(start);
 
-        Debug.Log($"Starting pathfinding from {start} to {target}");
+        
 
         while (queue.Count > 0)
         {
             var current = queue.Dequeue();
             if (current == target)
             {
-                Debug.Log($"Path found to {target}");
+                
                 return true;
             }
 
@@ -308,16 +473,14 @@ public class Game : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log($"Neighbor {neighbor} is invalid or already visited.");
+                    
                 }
             }
         }
 
-        Debug.LogWarning($"No path found from {start} to {target}");
+       
         return false;
     }
-
-
     // Check if the cell is valid (not a wall, within bounds, etc.)
     bool IsValidCell(Vector2Int cell)
     {
@@ -338,9 +501,6 @@ public class Game : MonoBehaviour
 
         return true;
     }
-
-
-
     void CheckTorchPickup(Vector3 position)
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(position, 0.1f);
@@ -350,39 +510,40 @@ public class Game : MonoBehaviour
             {
                 torchCount++;
                 Destroy(hit.gameObject);
+                AudioManager.instance.PlaySFX("PickableTorch");
                 UpdateTorchUI();
             }
         }
     }
-
-    void PlaceTorch()
+    void ActivateTorch()
     {
-        // Check cooldown
-        if (Time.time - lastTorchPlaceTime < torchPlaceCooldown)
+        // Ensure cooldown and torch availability
+        if (torchCount > 0 && Time.time - lastTorchActivationTime >= torchActivationCooldown)
         {
-            Debug.Log("Torch placement is on cooldown!");
-            return;
-        }
+            // Check if a torch is already active
+            Transform existingTorch = Player.Find("Torch");
+            if (existingTorch == null)
+            {
+                // Instantiate and attach the torch to the player
+                GameObject torch = Instantiate(TorchPrefab, Player.position, Quaternion.identity);
+                torch.name = "Torch";
+                torch.transform.SetParent(Player); // Attach to the player
 
-        if (torchCount > 0)
-        {
-            // Place the torch
-            Instantiate(TorchPrefab, new Vector3(x, y, 0), Quaternion.identity, Level);
-            torchCount--;
-            UpdateTorchUI();
+                // Play the torch activation SFX
+                AudioManager.instance.PlaySFX("PlaceTorch");
 
-            // Update the last placement time
-            lastTorchPlaceTime = Time.time;
-        }
-        else
-        {
-            Debug.Log("No torches available!");
+                torchCount--; // Decrease torch count
+                UpdateTorchUI();
+
+                // Update last activation time
+                lastTorchActivationTime = Time.time;
+            }
         }
     }
-
-
     void UpdateTorchUI()
     {
         torchCounterText.text = "Torches: " + torchCount;
     }
+
+
 }

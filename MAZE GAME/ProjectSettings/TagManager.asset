@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 2
   tags:
   - TorchPickup
+  - Floor
+  - Wall
+  - Trap
   layers:
   - Default
   - TransparentFX
@@ -12,9 +15,9 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
+  - Walkable
+  - Not Walkable
+  - Obstacle
   - 
   - 
   - 
