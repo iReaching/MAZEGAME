@@ -7,7 +7,7 @@ public class Trap : MonoBehaviour
     private Collider2D spikeCollider;
     private SpriteRenderer spikeRenderer;
 
-    [SerializeField] private float spikeCooldown = 2f; // Time between spikes appearing and disappearing
+    [SerializeField] private float spikeCooldown = 1.5f; // Time between spikes appearing and disappearing
 
     private void Start()
     {

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -16,7 +17,7 @@ public class Game : MonoBehaviour
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI statsText; // UI Text for detailed stats
     public GameObject trapPrefab; // Assign the Trap prefab in the inspector
-    private int trapCount = 1; // Number of traps to spawn per maze
+    private int trapCount = 2; // Number of traps to spawn per maze
     private int mazeGenerationCount = 0; // Tracks the number of mazes generated
 
     public float initialTime = 60f; // Starting time in seconds
@@ -230,10 +231,26 @@ public class Game : MonoBehaviour
             Time.deltaTime * 2f // Adjust zoom speed
         );
     }
+    private void ClearExistingSpikes()
+{
+    // Iterate through all children of the Level parent and destroy traps
+    foreach (Transform child in Level)
+    {
+        if (child.CompareTag("Trap")) // Ensure the object has the "Trap" tag
+        {
+            Destroy(child.gameObject);
+            Debug.Log($"Cleared spike: {child.name}");
+        }
+    }
+}
+
     void GenerateMaze()
     {
+        // Clear previous maze objects
         foreach (Transform child in Level)
             Destroy(child.gameObject);
+
+        ClearExistingSpikes();
 
         hwalls = new bool[w + 1, h];
         vwalls = new bool[w, h + 1];
@@ -338,7 +355,7 @@ public class Game : MonoBehaviour
                 Debug.Log("Existing trap destroyed.");
             }
         }
-
+        reachableCells.RemoveAll(cell => cell == new Vector2Int(0, 0)); // Remove bottom-left corner
         // Remove cells occupied by the player
         reachableCells.RemoveAll(cell => cell == new Vector2Int(x, y));
 
@@ -660,10 +677,21 @@ public class Game : MonoBehaviour
                 torchCount--; // Decrease torch count
                 UpdateTorchUI();
 
+                // Trigger the glow animation
+                animator.SetBool("isGlowing", true);
+
+                // Set a timer to turn off the glow after the torch cooldown
+                StartCoroutine(DeactivateGlowAfterDelay(5));
+
                 // Update last activation time
                 lastTorchActivationTime = Time.time;
             }
         }
+    }
+    private IEnumerator DeactivateGlowAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        animator.SetBool("isGlowing", false);
     }
     void UpdateTorchUI()
     {
