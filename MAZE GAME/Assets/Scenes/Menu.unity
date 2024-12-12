@@ -415,7 +415,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fd8b6b16f74df040a7cea6ffaa33c73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  musicSounds: []
+  musicSounds:
+  - name: Lobby
+    clip: {fileID: 8300000, guid: f1d5e5fd22dca1c429b8bb3281ab26df, type: 3}
   sfxSounds:
   - name: ButtonPress
     clip: {fileID: 8300000, guid: 4d1e747bb2b097d45ad933b8236c8f4a, type: 3}
@@ -425,6 +427,8 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 400a3afeeec24ff47a34c580911a10fc, type: 3}
   - name: PlaceTorch
     clip: {fileID: 8300000, guid: 41f949921749b8d4085691b0515b5148, type: 3}
+  - name: TrapTriggered
+    clip: {fileID: 8300000, guid: 59ea60193b0941a48a358160083e8809, type: 3}
   musicSource: {fileID: 1285441833}
   sfxSource: {fileID: 650800660}
 --- !u!4 &748583579
@@ -962,7 +966,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.1
   m_Pitch: 1
   Loop: 0
   Mute: 0

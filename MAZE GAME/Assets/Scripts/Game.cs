@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 
 public class Game : MonoBehaviour
 {
+    public Animator animator;
     public static Game instance;
     public GameObject gameOverPanel; // Reference to the Game Over popup
     public GameObject trapPrefab; // Assign the Trap prefab in the inspector
@@ -69,6 +70,7 @@ public class Game : MonoBehaviour
 
     void Update()
     {
+        animator.SetBool("isWalking", false);
         if (!isGameOver)
         {
             currentTime -= Time.deltaTime; // Reduce time
@@ -401,22 +403,31 @@ public class Game : MonoBehaviour
     }
     public void MoveLeft()
     {
+        animator.SetBool("isWalking", true);
         TryMove(-1, 0, hwalls, x, y);
+        
+
     }
 
     public void MoveRight()
     {
+        animator.SetBool("isWalking", true);
         TryMove(1, 0, hwalls, x + 1, y);
+        
     }
 
     public void MoveDown()
     {
+        animator.SetBool("isWalking", true);
         TryMove(0, -1, vwalls, x, y);
+        
     }
 
     public void MoveUp()
     {
+        animator.SetBool("isWalking", true);
         TryMove(0, 1, vwalls, x, y + 1);
+        
     }
 
     void TryMove(int dx, int dy, bool[,] walls, int wx, int wy)
@@ -426,6 +437,7 @@ public class Game : MonoBehaviour
 
         if (walls[wx, wy])
         {
+            
             Player.position = Vector3.Lerp(Player.position, new Vector3(nx, ny), 0.1f);
         }
         else

@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Trap : MonoBehaviour
 {
+    Game game;
     private Collider2D spikeCollider;
     private SpriteRenderer spikeRenderer;
 

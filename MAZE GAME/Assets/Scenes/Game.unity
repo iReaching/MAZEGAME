@@ -181,7 +181,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 939012365, guid: 89d8d30930f375a4eaaf76a6965d1764, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 36687f4eb89591243b1b84557e8df672, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -832,6 +832,7 @@ GameObject:
   - component: {fileID: 867138561}
   - component: {fileID: 867138563}
   - component: {fileID: 867138564}
+  - component: {fileID: 867138565}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -950,7 +951,7 @@ TrailRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Time: 0.17
-  m_PreviewTimeScale: 1
+  m_PreviewTimeScale: 0
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1
@@ -989,7 +990,7 @@ TrailRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 0, g: 0, b: 0, a: 1}
+      key0: {r: 0.25882354, g: 0.454902, b: 0.627451, a: 1}
       key1: {r: 1, g: 1, b: 1, a: 0}
       key2: {r: 0, g: 0, b: 0, a: 1}
       key3: {r: 0, g: 0, b: 0, a: 0}
@@ -1091,6 +1092,27 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 1.145
+--- !u!95 &867138565
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 867138558}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 70d7b1b0643ba90468ea92fcee2a2b47, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &932740466
 GameObject:
   m_ObjectHideFlags: 0
@@ -2357,6 +2379,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11a50ec32cc0d654ca3720bcd8c6607c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  animator: {fileID: 867138565}
   gameOverPanel: {fileID: 558511588}
   trapPrefab: {fileID: 1955855746994002052, guid: b7473b6296ee9d84aa0c8ffdb2fe858e, type: 3}
   initialTime: 90

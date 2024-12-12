@@ -26,7 +26,7 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
-
+        AudioManager.instance.PlayMusic("Lobby");
     }
 
     public void PlayMusic(string name)
