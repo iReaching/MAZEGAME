@@ -8,20 +8,26 @@ using UnityEngine.SceneManagement;
 
 public class Game : MonoBehaviour
 {
+
+
     public Animator animator;
     public static Game instance;
     public GameObject gameOverPanel; // Reference to the Game Over popup
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI statsText; // UI Text for detailed stats
     public GameObject trapPrefab; // Assign the Trap prefab in the inspector
     private int trapCount = 1; // Number of traps to spawn per maze
     private int mazeGenerationCount = 0; // Tracks the number of mazes generated
 
     public float initialTime = 60f; // Starting time in seconds
     private float currentTime; // Current remaining time
+    private bool isGameStarted = false; // Tracks if gameplay has started
     private bool isGameOver = false; // Tracks game over state
     public TextMeshProUGUI timerText; // UI Text to display the timer
 
     public float holep;
     public int w, h, x, y;
+    private int initialW, initialH; // Store initial maze size
     public bool[,] hwalls, vwalls;
     public Transform Level, Player, Goal;
     public GameObject Floor, Wall, TorchPrefab, TorchPickupPrefab;
@@ -40,6 +46,11 @@ public class Game : MonoBehaviour
     private bool isMoving = false; // Tracks if the player is moving
     private float torchActivationCooldown = 1.5f; // Cooldown duration in seconds
     private float lastTorchActivationTime = -1f;  // Tracks the last time a torch was placed
+    
+    private int totalScore = 0;
+    private int totalTorchesCollected = 0;
+    private int totalGoalsReached = 0;
+    private float totalTimePlayed = 0f;
     private void Awake()
 
     {
@@ -54,37 +65,46 @@ public class Game : MonoBehaviour
             Destroy(gameObject); // Prevent duplicate Game objects
         }
     }
-   
-    void Start()
+
+    private void Start()
     {
-        // Initialize game state
-        if (currentTime <= 0)
-        {
-            currentTime = initialTime;
-        }
-        isGameOver = false;
-        UpdateTimerUI();
+        initialW = w;
+        initialH = h;
+        currentTime = initialTime;
+
+        // Don't start gameplay logic until the Start button is pressed
+        Debug.Log("Waiting for game to start...");
+    }
+    public void StartGame()
+    {
+        Debug.Log("Game Started!");
+        isGameStarted = true;
+        currentTime = initialTime;
         GenerateMaze();
         UpdateTorchUI();
+        UpdateTimerUI();
     }
-
     void Update()
     {
-        animator.SetBool("isWalking", false);
-        if (!isGameOver)
+        // Skip gameplay logic if the game hasn't started or is over
+        if (!isGameStarted || isGameOver) return;
+
+        // Update timer
+        currentTime -= Time.deltaTime;
+        totalTimePlayed += Time.deltaTime;
+
+        if (currentTime <= 0)
         {
-            currentTime -= Time.deltaTime; // Reduce time
-            if (currentTime <= 0)
-            {
-                currentTime = 0;
-                GameOver(); // Trigger Game Over
-            }
-            UpdateTimerUI();
+            currentTime = 0;
+            GameOver();
         }
+        UpdateTimerUI();
+        
         HandleJoystickInput();
         SmoothPlayerMovement();
         CheckGoalReached();
         AdjustCameraZoom(); // Dynamically adjust the zoom
+        AdjustCharacterAnimation();
     }
     void UpdateTimerUI()
     {
@@ -113,6 +133,10 @@ public class Game : MonoBehaviour
             timerText.color = Color.white; // Default color
         }
     }
+    private void AddScore(int points)
+    {
+        totalScore += points;
+    }
     public void AddTime(float extraTime)
     {
         currentTime += extraTime; // Update the timer
@@ -138,8 +162,14 @@ public class Game : MonoBehaviour
     {
         isGameOver = true;
         Debug.Log("Game Over triggered!");
+        Debug.Log($"Total time spent in the game: {Mathf.FloorToInt(totalTimePlayed)} seconds");
         Time.timeScale = 0f; // Pause the game
         gameOverPanel.SetActive(true); // Show the Game Over popup
+        // Display score and stats
+        scoreText.text = $"Score: {totalScore}";
+        statsText.text = $"Torches Collected: {totalTorchesCollected}\n" +
+                         $"Goals Reached: {totalGoalsReached}\n" +
+                         $"Total Time Played: {Mathf.FloorToInt(totalTimePlayed)}s";
     }
     private void ResetGameState()
     {
@@ -148,10 +178,38 @@ public class Game : MonoBehaviour
         torchCount = 0;
         isGameOver = false;
 
+        // Reset maze dimensions
+        w = initialW;
+        h = initialH;
+        // Reset stats
+        totalScore = 0;
+        totalTorchesCollected = 0;
+        totalGoalsReached = 0;
+        totalTimePlayed = 0f;
+
+        foreach (Transform child in Level)
+        {
+            if (child.CompareTag("Trap") || child.CompareTag("TorchPickup"))
+            {
+                Destroy(child.gameObject); // Destroy traps and torches
+                Debug.Log($"Destroyed object: {child.name}");
+            }
+        }
         // Regenerate the maze or reset any other states
         GenerateMaze();
         UpdateTimerUI();
         UpdateTorchUI();
+
+    }
+    private void AdjustCharacterAnimation()
+    {
+        Vector2 movement = new Vector2(
+            currentJoystickDirection.x,
+            currentJoystickDirection.y
+        );
+
+        bool isMoving = movement != Vector2.zero;
+        animator.SetBool("isWalking", isMoving);
     }
     void AdjustCameraZoom()
     {
@@ -269,10 +327,36 @@ public class Game : MonoBehaviour
     {
         if (trapCount <= 0) return; // No traps to spawn
 
-        reachableCells.RemoveAll(cell => cell == new Vector2Int(x, y)); // Remove player position
-        reachableCells.RemoveAll(cell => IsBlockedByFlag(cell)); // Remove cells near the flag
+        Debug.Log($"Reachable cells before filtering: {reachableCells.Count}");
 
-        for (int i = 0; i < trapCount; i++) // Loop based on trapCount
+        // Step 1: Remove existing traps
+        foreach (Transform child in Level)
+        {
+            if (child.CompareTag("Trap"))
+            {
+                Destroy(child.gameObject); // Destroy existing traps
+                Debug.Log("Existing trap destroyed.");
+            }
+        }
+
+        // Remove cells occupied by the player
+        reachableCells.RemoveAll(cell => cell == new Vector2Int(x, y));
+
+        // Remove cells near or on the flag (goal)
+        reachableCells.RemoveAll(cell => IsBlockedByFlag(cell));
+
+        // Ensure traps do not overlap the goal
+        Vector2Int goalCell = new Vector2Int((int)Goal.position.x, (int)Goal.position.y);
+        reachableCells.RemoveAll(cell => cell == goalCell);
+
+        Debug.Log($"Reachable cells after filtering: {reachableCells.Count}");
+        if (reachableCells.Count == 0)
+        {
+            Debug.LogWarning("No valid cells available for traps!");
+            return;
+        }
+
+        for (int i = 0; i < trapCount; i++)
         {
             int attempts = 0;
             bool valid = false;
@@ -280,42 +364,67 @@ public class Game : MonoBehaviour
 
             do
             {
+                if (reachableCells.Count == 0)
+                {
+                    Debug.LogWarning("No valid cells remaining for traps!");
+                    return;
+                }
+
                 trapCell = reachableCells[Random.Range(0, reachableCells.Count)];
                 valid = IsValidTrapCell(trapCell);
+                Debug.Log($"Attempt {attempts + 1}: Checking cell {trapCell} - Valid: {valid}");
                 attempts++;
             }
             while (!valid && attempts < 100);
 
             if (valid)
             {
-                reachableCells.Remove(trapCell); // Remove cell to prevent overlap
+                reachableCells.Remove(trapCell); // Prevent overlapping traps
                 Instantiate(trapPrefab, new Vector3(trapCell.x, trapCell.y, 0), Quaternion.identity, Level);
                 Debug.Log($"Trap placed at: {trapCell}");
             }
             else
             {
-                Debug.LogWarning("Unable to find a valid position for trap.");
+                Debug.LogWarning("Unable to find a valid position for trap after 100 attempts.");
             }
         }
     }
 
 
-    // Validates trap placement
+
     bool IsValidTrapCell(Vector2Int cell)
     {
-        if (cell == new Vector2Int(x, y)) return false; // Avoid player position
-        if (Vector2.Distance(new Vector2(cell.x, cell.y), Goal.position) < 1.0f) return false; // Avoid near flag
+        // Avoid player position
+        if (cell == new Vector2Int(x, y))
+        {
+            Debug.Log($"Invalid cell {cell}: Player position.");
+            return false;
+        }
 
+        // Avoid goal (stairs) position
+        Vector2Int goalCell = new Vector2Int((int)Goal.position.x, (int)Goal.position.y);
+        if (cell == goalCell)
+        {
+            Debug.Log($"Invalid cell {cell}: Goal position.");
+            return false;
+        }
+
+        // Check for collisions with existing objects (like torches or traps)
         Collider2D[] hits = Physics2D.OverlapCircleAll(new Vector2(cell.x, cell.y), 0.1f);
         foreach (var hit in hits)
         {
-            if (hit.CompareTag("TorchPickup") || hit.CompareTag("Trap"))
+            if (hit.CompareTag("TorchPickup") || hit.CompareTag("Trap") || hit.CompareTag("Goal"))
             {
-                return false; // Avoid overlapping torches or traps
+                Debug.Log($"Invalid cell {cell}: Overlaps with {hit.gameObject.name} ({hit.tag}).");
+                return false;
             }
         }
-        return true;
+
+        return true; // Valid cell
     }
+
+
+
 
     // Checks if a cell is blocked by the flag
     bool IsBlockedByFlag(Vector2Int cell)
@@ -378,7 +487,9 @@ public class Game : MonoBehaviour
         if (Vector3.Distance(Player.position, Goal.position) < 0.12f)
         {
             AudioManager.instance.PlaySFX("ObjectiveGrab");
-            AddTime(10); // Add time for reaching the goal
+            totalGoalsReached++; // Increment goals reached
+            AddScore(100); // Add points for reaching the goal
+            AddTime(10);
             Debug.Log("Time extended! Current time: " + currentTime);
 
             // Increment maze dimensions
@@ -521,6 +632,7 @@ public class Game : MonoBehaviour
         {
             if (hit.CompareTag("TorchPickup"))
             {
+                totalTorchesCollected++;
                 torchCount++;
                 Destroy(hit.gameObject);
                 AudioManager.instance.PlaySFX("PickableTorch");
